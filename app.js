@@ -1,8 +1,9 @@
 const timeStamp = require('./serverUtility/time.js').timeStamp;
 const WebApp = require('./webapp');
 const fs = require('fs');
+const lib = require('./lib/handlers.js');
 
-let registeredUsers = ['joy','arvind'];
+let registeredUsers = ['divya'];
 let session = {};
 
 
@@ -20,18 +21,27 @@ const logger = function(fs,req,res) {
 }
 /*============================================================================*/
 let app = WebApp.create();
+
 app.use((req,res)=>{
   logger(fs,req,res);
 })
 
+
 app.get('/',(req,res)=>{
-  res.redirect('/loginPage.html');
+  res.redirect('/login.html');
 })
-app.get('/loginPage.html',(req,res)=>{
-  let html = fs.readFileSync('public/loginPage.html','utf8');
+
+app.get('/login.html',(req,res)=>{
+  let html = fs.readFileSync('public/login.html','utf8');
   res.setHeader('Content-Type','text/html');
   res.write(html.replace('LOGIN_MESSAGE',req.cookies.message||''));
   res.end();
 });
+
+app.post('/register',(req,res)=>{
+ lib.registerUser(registeredUsers,req,res)
+});
+
+
 
 module.exports = app;
