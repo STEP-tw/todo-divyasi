@@ -38,7 +38,14 @@ app.get('/login.html',(req,res)=>{
   res.end();
 });
 
-app.post('/register',(req,res)=>{
+app.get('/homePage.html',(req,res)=>{
+  let html = fs.readFileSync('public/homePage.html','utf8');
+  res.setHeader('Content-Type','text/html');
+  res.write(html.replace('LOGIN_MESSAGE',req.cookies.message||''));
+  res.end();
+});
+
+app.post('/login.html',(req,res)=>{
  lib.registerUser(registeredUsers,req,res)
 });
 

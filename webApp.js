@@ -5,17 +5,21 @@ const toKeyValue = kv => {
     value: parts[1].trim()
   };
 };
+
 const accumulate = (o, kv) => {
   o[kv.key] = kv.value;
   return o;
 };
+
 const parseBody = text => text && text.split('&').map(toKeyValue).reduce(accumulate, {}) || {};
+
 let redirect = function(path) {
   console.log(`redirecting to ${path}`);
   this.statusCode = 302;
   this.setHeader('location', path);
   this.end();
 };
+
 const parseCookies = text => {
   try {
     return text && text.split(';').map(toKeyValue).reduce(accumulate, {}) || {};
@@ -23,6 +27,7 @@ const parseCookies = text => {
     return {};
   }
 }
+
 let invoke = function(req, res) {
   let handler = this._handlers[req.method][req.url];
   if (!handler) {
@@ -33,25 +38,36 @@ let invoke = function(req, res) {
   }
   handler(req, res);
 }
+
 const initialize = function() {
   this._handlers = {
     GET: {},
     POST: {}
   };
   this._preprocess = [];
+  this._postProcess = [];
 };
+
 const get = function(url, handler) {
   this._handlers.GET[url] = handler;
 }
+
 const post = function(url, handler) {
   this._handlers.POST[url] = handler;
 };
+
 const use = function(handler) {
   this._preprocess.push(handler);
 };
+
+const usePostProcess = function(handler) {
+  this._postProcess.push(handler);
+}
+
 let urlIsOneOf = function(urls) {
   return urls.includes(this.url);
 }
+
 const main = function(req, res) {
   console.log(req.headers);
   res.redirect = redirect.bind(res);
@@ -80,6 +96,9 @@ let create = () => {
   rh.get = get;
   rh.post = post;
   rh.use = use;
+  rh.usePostProcess = usePostProcess;
   return rh;
 }
+
+
 exports.create = create;
