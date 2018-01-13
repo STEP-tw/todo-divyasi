@@ -1,13 +1,10 @@
 const timeStamp = require('./serverUtility/time.js').timeStamp;
 const WebApp = require('./webapp');
 const fs = require('fs');
-const CommentHandler = require('./serverUtility/commentHandler.js');
 const lib = require('./lib/handlers.js');
 
 let registeredUsers = ['joy','arvind'];
 let session = {};
-let commentHandler = new CommentHandler(process.env.COMMENT_STORE||'./data/comments.json');
-commentHandler.loadComments();
 
 /*============================================================================*/
 const logger = function(fs,req,res) {
@@ -38,9 +35,7 @@ app.get('/login.html',(req,res)=>{
   res.write(html.replace('LOGIN_MESSAGE',req.cookies.message||''));
   res.end();
 });
-app.get('/comments',(req,res)=>{
-  lib.processCommentLoadingReq(session,commentHandler,req,res)
-});
+
 app.post('/register',(req,res)=>{
   lib.registerUser(registeredUsers,req,res)
 });
@@ -48,8 +43,6 @@ app.post('/login',(req,res)=>{
   lib.processLoginRequest(registeredUsers,session,req,res)
 });
 app.get('/logout',lib.processLogoutRequest);
-app.post('/submitForm',(req,res)=>{
-  lib.storeComments(commentHandler,session,req,res);
-});
+
 
 module.exports = app;
