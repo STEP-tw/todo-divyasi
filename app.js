@@ -4,7 +4,6 @@ const fs = require('fs');
 const lib = require('./lib/handlers.js');
 
 let registeredUsers = ['divya'];
-let session = {};
 
 
 /*============================================================================*/
@@ -55,7 +54,6 @@ app.get('/todo.html',(req,res)=>{
 app.post('/login.html',(req,res)=>{
  lib.registerUser(registeredUsers,req,res)
 });
-
 
 
 module.exports = app;
