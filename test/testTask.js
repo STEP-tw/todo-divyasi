@@ -1,6 +1,6 @@
 const chai = require('chai');
 const assert = chai.assert;
-const Task = require('../public/js/task.js');
+const Task = require('../lib/task.js');
 
 
 describe('Title', ()=>{

@@ -1,0 +1,24 @@
+{
+  "name": "todo-divyasi",
+  "version": "1.0.0",
+  "description": "this is an assignment.",
+  "main": "server.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha test",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/STEP-tw/todo-divyasi.git"
+  },
+  "author": "divya singh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/STEP-tw/todo-divyasi/issues"
+  },
+  "homepage": "https://github.com/STEP-tw/todo-divyasi#readme"
+}

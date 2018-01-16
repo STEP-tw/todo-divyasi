@@ -15,28 +15,40 @@ describe('app',()=>{
     })
   })
   describe('GET /',()=>{
-    it('redirects to login.html',done=>{
+    it('should give login page',done=>{
       request(app,{method:'GET',url:'/'},(res)=>{
-        th.should_be_redirected_to(res,'/login.html');
-        assert.equal(res.body,"");
+        th.status_is_ok(res);
+        th.body_contains(res,'Login')
+        th.body_contains(res,'userName')
         done();
       })
     })
   })
-  describe('GET /login.html',()=>{
+  describe('GET /login',()=>{
     it('gives the login page',done=>{
-      request(app,{method:'GET',url:'/login.html'},res=>{
+      request(app,{method:'GET',url:'/login'},res=>{
         th.status_is_ok(res);
         th.content_type_is(res,'text/html');
         done();
       })
     })
   })
-  describe('GET /homePage.html',()=>{
+  describe('GET /homePage',()=>{
     it('serves the homePage',done=>{
-      request(app,{method:'GET',url:'/homePage.html'},res=>{
+      request(app,{method:'GET',url:'/homePage'},res=>{
         th.status_is_ok(res);
         th.content_type_is(res,'text/html');
+        th.body_contains(res,'Create Todo');
+        th.body_contains(res,'View Todo');
+        done();
+      })
+    })
+  })
+  describe('POST /login',()=>{
+    it('redirects to homePage for valid user',done=>{
+      request(app,{method:'POST',url:'/login',body:'userName=divya'},res=>{
+        th.should_be_redirected_to(res,'/homePage');
+        th.should_have_cookie(res,'sessionid','0');
         done();
       })
     })

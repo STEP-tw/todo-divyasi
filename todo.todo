@@ -1,0 +1,6 @@
+
+✔ to server login page on / url request @done(2018-01-15 15:03)
+☐ to server login page on /login url.
+☐ to server the home page for valid user.
+☐ to show the msg 'login failed' in login page when invalid user.
+☐ to logout user and server login page on clicking logout page.

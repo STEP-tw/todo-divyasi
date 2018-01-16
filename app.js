@@ -3,9 +3,12 @@ const WebApp = require('./webapp');
 const fs = require('fs');
 const lib = require('./lib/handlers.js');
 
-let registeredUsers = ['divya'];
+let registeredUsers = [{userName:'divya'}];
 
+let loginPage = fs.readFileSync('public/login','utf8');
+let homePage = fs.readFileSync('public/homePage','utf8');
 
+let session = {};
 /*============================================================================*/
 const logger = function(fs,req,res) {
   let logs = ['--------------------------------------------------------------',
@@ -21,39 +24,48 @@ const logger = function(fs,req,res) {
 /*============================================================================*/
 let app = WebApp.create();
 
+let redirectLoggedOutUserToLogin = (res, req)=>{
+  let allowedUrlForLoogedUser = ['/', 'homePage','todo'];
+  if (req.urlIsOneOf(allowedUrlForLoogedUser) && !req.user) {
+    res.redirect('/login');
+  }
+}
+app.usePostProcess(redirectLoggedOutUserToLogin);
+
 app.use((req,res)=>{
   logger(fs,req,res);
 })
 
 
 app.get('/',(req,res)=>{
-  res.redirect('/login.html');
+  res.setHeader('Content-Type','text/html');
+  res.write(loginPage);
+  res.end();
 })
 
-app.get('/login.html',(req,res)=>{
-  let html = fs.readFileSync('public/login.html','utf8');
+app.get('/login',(req,res)=>{
+  res.setHeader('Content-Type','text/html');
+  res.write(loginPage.replace('LOGIN_MESSAGE',req.cookies.message||''));
+  res.end();
+});
+
+app.get('/homePage',(req,res)=>{
+  let html = fs.readFileSync('public/homePage','utf8');
   res.setHeader('Content-Type','text/html');
   res.write(html.replace('LOGIN_MESSAGE',req.cookies.message||''));
   res.end();
 });
 
-app.get('/homePage.html',(req,res)=>{
-  let html = fs.readFileSync('public/homePage.html','utf8');
+app.get('/addTodo',(req,res)=>{
+  let html = fs.readFileSync('public/addTodo','utf8');
   res.setHeader('Content-Type','text/html');
   res.write(html.replace('LOGIN_MESSAGE',req.cookies.message||''));
   res.end();
 });
 
-app.get('/todo.html',(req,res)=>{
-  let html = fs.readFileSync('public/todo.html','utf8');
-  res.setHeader('Content-Type','text/html');
-  res.write(html.replace('LOGIN_MESSAGE',req.cookies.message||''));
-  res.end();
-});
 
-app.post('/login.html',(req,res)=>{
- lib.registerUser(registeredUsers,req,res)
+app.post('/login',(req,res)=>{
+ lib.registerUser(session,registeredUsers,req,res)
 });
-
 
 module.exports = app;
