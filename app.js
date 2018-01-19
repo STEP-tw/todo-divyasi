@@ -1,12 +1,11 @@
-const timeStamp = require('./serverUtility/time.js').timeStamp;
+const timeStamp = require('./utility/time.js').timeStamp;
 const WebApp = require('./webapp');
 const fs = require('fs');
 const lib = require('./lib/handlers.js');
-
-let registeredUsers = [{userName:'divya'}];
+const utils = require('./utility/utils.js');
 
 let loginPage = fs.readFileSync('public/login','utf8');
-let homePage = fs.readFileSync('public/homePage','utf8');
+let home = fs.readFileSync('public/homePage','utf8');
 
 let session = {};
 /*============================================================================*/
@@ -22,12 +21,20 @@ const logger = function(fs,req,res) {
   fs.appendFile('./data/log.json',logs,()=>{});
 }
 /*============================================================================*/
+
 let app = WebApp.create();
 
 let redirectLoggedOutUserToLogin = (res, req)=>{
-  let allowedUrlForLoogedUser = ['/', 'homePage','todo'];
+  let allowedUrlForLoogedUser = ['/', 'home','todo'];
   if (req.urlIsOneOf(allowedUrlForLoogedUser) && !req.user) {
     res.redirect('/login');
+  }
+}
+
+let redirectLoggedUserToHome = (req, res) => {
+  if (req.urlIsOneOf(['/','/login']) && utils.isValidSession(app.registeredUsers, req)) {
+    res.redirect('/home');
+    return;
   }
 }
 app.usePostProcess(redirectLoggedOutUserToLogin);
@@ -36,6 +43,7 @@ app.use((req,res)=>{
   logger(fs,req,res);
 })
 
+app.use(redirectLoggedUserToHome);
 
 app.get('/',(req,res)=>{
   res.setHeader('Content-Type','text/html');
@@ -49,7 +57,7 @@ app.get('/login',(req,res)=>{
   res.end();
 });
 
-app.get('/homePage',(req,res)=>{
+app.get('/home',(req,res)=>{
   let html = fs.readFileSync('public/homePage','utf8');
   res.setHeader('Content-Type','text/html');
   res.write(html.replace('LOGIN_MESSAGE',req.cookies.message||''));
@@ -65,7 +73,7 @@ app.get('/addTodo',(req,res)=>{
 
 
 app.post('/login',(req,res)=>{
- lib.registerUser(session,registeredUsers,req,res)
+ lib.registerUser(session,app.registeredUsers,req,res)
 });
 
 module.exports = app;

@@ -4,10 +4,10 @@ const Task = require('../lib/task.js');
 
 
 describe('Title', ()=>{
-  describe('editText', ()=>{
+  describe('editTodoItem', ()=>{
     it('should edit the item', ()=>{
       let task = new Task('purchage a earphone', 1);
-      task.editText('purchage a wrist watch');
+      task.editTodoItem('purchage a wrist watch');
       assert.equal(task.todoItem, 'purchage a wrist watch');
     })
   })
@@ -44,11 +44,11 @@ describe('Title', ()=>{
       assert.equal(task.status, false);
     })
   })
-  describe('getText', ()=>{
+  describe('getTodo', ()=>{
     it('should give the todoItem', ()=>{
       let task = new Task('purchage a earphone', 1);
       assert.equal(task.todoItem, 'purchage a earphone');
-      task.editText('purchage a wrist watch');
+      task.editTodoItem('purchage a wrist watch');
       assert.equal(task.todoItem, 'purchage a wrist watch');
     })
   })

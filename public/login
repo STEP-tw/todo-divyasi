@@ -8,6 +8,7 @@
     <center><div class="heading">
       <p style="font-size:40px;">Login</p>
     </div>
+    LOGIN_MESSAGE
     <form action="/login" method="post">
       <div class="userName" style="font-size:20px;">
         userName:<input type="text" name="userName">

@@ -27,14 +27,12 @@ describe('Account', ()=>{
       assert.deepEqual(account.getTodo(1),expected);
     })
   })
-  describe.only('#deleteTodo', ()=>{
+  describe('#deleteTodo', ()=>{
     it('should delete a specified todo', ()=>{
       let account = new Account('divya', 123);
       account.addTodo('app', 'build a todo app');
       account.deleteTodo(1);
       let expected = [];
-      console.log('----------',account.allTodos,'----------');
-      console.log('----------',expected,'----------');
       assert.deepEqual(account.allTodos,expected);
     })
   })
