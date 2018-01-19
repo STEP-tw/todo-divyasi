@@ -1,7 +1,6 @@
 const timeStamp = require('./utility/time.js').timeStamp;
 const WebApp = require('./webapp');
 const fs = require('fs');
-const lib = require('./lib/handlers.js');
 const utils = require('./utility/utils.js');
 
 let loginPage = fs.readFileSync('public/login','utf8');
@@ -24,9 +23,9 @@ const logger = function(fs,req,res) {
 
 let app = WebApp.create();
 
-let redirectLoggedOutUserToLogin = (res, req)=>{
-  let allowedUrlForLoogedUser = ['/', 'home','todo'];
-  if (req.urlIsOneOf(allowedUrlForLoogedUser) && !req.user) {
+let redirectLoggedOutUserToLogin = (req, res)=>{
+  let allowedUrlForLoogedUser = ['/home'];
+  if (req.urlIsOneOf(allowedUrlForLoogedUser) && !utils.isValidSession(app.registeredUsers, req)) {
     res.redirect('/login');
   }
 }
@@ -37,17 +36,17 @@ let redirectLoggedUserToHome = (req, res) => {
     return;
   }
 }
-app.usePostProcess(redirectLoggedOutUserToLogin);
 
 app.use((req,res)=>{
   logger(fs,req,res);
 })
+app.use(redirectLoggedOutUserToLogin);
 
 app.use(redirectLoggedUserToHome);
 
 app.get('/',(req,res)=>{
   res.setHeader('Content-Type','text/html');
-  res.write(loginPage);
+  res.write(loginPage.replace('LOGIN_MESSAGE',req.cookies.message||''));
   res.end();
 })
 
@@ -73,7 +72,16 @@ app.get('/addTodo',(req,res)=>{
 
 
 app.post('/login',(req,res)=>{
- lib.registerUser(session,app.registeredUsers,req,res)
+  let user = app.registeredUsers.find(u=>req.body.userName==u.userName);
+  if(user) {
+    let sessionid = new Date().getTime()
+    user.sessionid=sessionid;
+    res.setHeader('Set-Cookie',[`sessionid=${sessionid}`,`message='';Max-Age=0`]);
+    res.redirect('/home');
+    return;
+  }
+  res.setHeader('Set-Cookie',`message=login failed;Max-Age=5`);
+  res.redirect('/login');
 });
 
 module.exports = app;
