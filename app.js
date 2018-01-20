@@ -5,8 +5,8 @@ const utils = require('./utility/utils.js');
 
 let loginPage = fs.readFileSync('public/login','utf8');
 let home = fs.readFileSync('public/homePage','utf8');
+let registeredUsers = [{userName:'divya'},{userName:'yogi'}];
 
-let session = {};
 /*============================================================================*/
 const logger = function(fs,req,res) {
   let logs = ['--------------------------------------------------------------',
@@ -25,13 +25,15 @@ let app = WebApp.create();
 
 let redirectLoggedOutUserToLogin = (req, res)=>{
   let allowedUrlForLoogedUser = ['/home'];
-  if (req.urlIsOneOf(allowedUrlForLoogedUser) && !utils.isValidSession(app.registeredUsers, req)) {
+  let sessionid = req.cookies.sessionid;
+  if (req.urlIsOneOf(allowedUrlForLoogedUser) && !app.sessionManager.getSession(sessionid)) {
     res.redirect('/login');
   }
 }
 
 let redirectLoggedUserToHome = (req, res) => {
-  if (req.urlIsOneOf(['/','/login']) && utils.isValidSession(app.registeredUsers, req)) {
+  let sessionid = req.cookies.sessionid;
+  if (req.urlIsOneOf(['/','/login']) && app.sessionManager.getSession(sessionid)) {
     res.redirect('/home');
     return;
   }
@@ -72,11 +74,10 @@ app.get('/addTodo',(req,res)=>{
 
 
 app.post('/login',(req,res)=>{
-  let user = app.registeredUsers.find(u=>req.body.userName==u.userName);
+  let user = registeredUsers.find(u=>req.body.userName==u.userName);
   if(user) {
-    let sessionid = new Date().getTime()
-    user.sessionid=sessionid;
-    res.setHeader('Set-Cookie',[`sessionid=${sessionid}`,`message='';Max-Age=0`]);
+    let sessionid = app.sessionManager.createSession(req.body.userName);
+  res.setHeader('Set-Cookie',[`sessionid=${sessionid}`,`message='';Max-Age=0`]);
     res.redirect('/home');
     return;
   }
