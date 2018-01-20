@@ -29,26 +29,92 @@ describe('app',()=>{
     })
   })
   describe('GET /',()=>{
-    it('should give login page',done=>{
+    it('should serve login page for not loggedin',done=>{
       request(app,{method:'GET',url:'/'},(res)=>{
         th.status_is_ok(res);
-        th.body_contains(res,'Login')
-        th.body_contains(res,'userName')
+        th.body_contains(res,'Login');
+        th.body_contains(res,'userName');
+        th.body_contains(res,'submit');
+        done();
+      })
+    })
+    it('should redirect to home for loogedin users',done=>{
+      request(app,{method:'GET',url:'/', headers:{cookie:`sessionid=${123}`}},(res)=>{
+        th.should_be_redirected_to(res, '/home');
+        done();
+      })
+    })
+    it('should serve login page for invalid sessionid',done=>{
+      request(app,{method:'GET',url:'/', headers:{cookie:`sessionid=${122}`}},(res)=>{
+        th.status_is_ok(res);
+        th.body_contains(res,'Login');
+        th.body_contains(res,'userName');
+        th.body_contains(res,'submit');
         done();
       })
     })
   })
   describe('GET /login',()=>{
-    it('gives the login page',done=>{
+    it('should serve the login page for not loggedin',done=>{
       request(app,{method:'GET',url:'/login'},res=>{
         th.status_is_ok(res);
         th.content_type_is(res,'text/html');
+        th.body_contains(res,'Login');
+        th.body_contains(res,'userName');
+        th.body_contains(res,'submit');
+        done();
+      })
+    })
+    it('should serve the login page for invalid sessionid',done=>{
+      request(app,{method:'GET',url:'/login',headers:{cookie:`sessionid=${122}`}},(res)=>{
+        th.status_is_ok(res);
+        th.content_type_is(res,'text/html');
+        th.body_contains(res,'Login');
+        th.body_contains(res,'userName');
+        th.body_contains(res,'submit');
+        done();
+      })
+    })
+    it('should redirect to home page for loogedin users',done=>{
+      request(app,{method:'GET',url:'/login', headers:{cookie:`sessionid=${123}`}},res=>{
+        th.should_be_redirected_to(res, '/home')
+        done();
+      })
+    })
+  })
+  describe('POST /login',()=>{
+    it('should serve the home page with sessionid for valid users',done=>{
+      request(app,{method:'POST',url:'/login', body:'userName=yogi'},res=>{
+        th.status_is_ok(res);
+        th.should_have_cookie(res, 'sessionid', 123);
+        th.content_type_is(res,'text/html');
+        th.body_contains(res,'Create Todo');
+        th.body_contains(res,'View Todo');
+        done();
+      })
+    })
+    it('should serve the login page with message `login failed` for invalid users',done=>{
+      request(app,{method:'POST',url:'/login',body:'userName=yogiraj'},(res)=>{
+        th.should_be_redirected_to(res, '/login');
+        th.should_have_cookie(res, 'message', `login failed`);
+        done();
+      })
+    })
+    it('should redirect to home page for loogedin users',done=>{
+      request(app,{method:'POST',url:'/login', headers:{cookie:`sessionid=${123}`}},res=>{
+        th.should_be_redirected_to(res, '/home')
+        done();
+      })
+    })
+    it('should redirect to login page for invalid sessionid',done=>{
+      request(app,{method:'POST',url:'/login',headers:{cookie:`sessionid=${122}`}},(res)=>{
+        th.should_be_redirected_to(res, '/login');
         done();
       })
     })
   })
   describe('GET /home',()=>{
-    it('serves the home',done=>{
+    it('serves the home for valid sessionid',done=>{
       request(app,{method:'GET',url:'/home', headers:{cookie:`sessionid=${123}`}},res=>{
         th.status_is_ok(res);
         th.content_type_is(res,'text/html');
@@ -62,6 +128,36 @@ describe('app',()=>{
           th.should_be_redirected_to(res, '/login');
           done();
         })
+    })
+    it('redirect to login page for not loggedin users',done=>{
+        request(app,{method:'GET',url:'/home'},res=>{
+          th.should_be_redirected_to(res, '/login');
+          done();
+        })
+    })
+  })
+  describe('GET /logout',()=>{
+    it("should give login link when user successfully loggedout",done=>{
+      request(app,{method:'GET',url:'/logout', headers:{cookie:`sessionid=${123}`}},res=>{
+        th.status_is_ok(res);
+        th.content_type_is(res,'text/html');
+        th.body_contains(res,'successfully loggedout');
+        th.body_contains(res,'login here');
+        th.should_have_expiring_cookie(res,'sessionid',0);
+        done();
+      })
+    })
+    it("should redirect to login page for user without sessionid",done=>{
+      request(app,{method:'GET',url:'/logout'},res=>{
+        th.should_be_redirected_to(res,'/login');
+        done();
+      })
+    })
+    it("should redirect to login page for user invalid sessionid",done=>{
+      request(app,{method:'GET',url:'/logout',headers:{cookie:`sessionid=${122}`}},res=>{
+        th.should_be_redirected_to(res,'/login');
+        done();
+      })
     })
   })
 })

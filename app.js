@@ -24,7 +24,7 @@ const logger = function(fs,req,res) {
 let app = WebApp.create();
 
 let redirectLoggedOutUserToLogin = (req, res)=>{
-  let allowedUrlForLoogedUser = ['/home'];
+  let allowedUrlForLoogedUser = ['/home','/logout'];
   let sessionid = req.cookies.sessionid;
   if (req.urlIsOneOf(allowedUrlForLoogedUser) && !app.sessionManager.getSession(sessionid)) {
     res.redirect('/login');
@@ -58,10 +58,18 @@ app.get('/login',(req,res)=>{
   res.end();
 });
 
+app.get('/logout',(req,res)=>{
+  let html=`<p>successfully loggedout</p><br><br><a href=/login>login here</a>`
+  res.setHeader('Content-Type','text/html');
+  res.setHeader('Set-Cookie',`sessionid=0;Max-Age=5`);
+  res.write(html);
+  res.end();
+});
+
 app.get('/home',(req,res)=>{
   let html = fs.readFileSync('public/homePage','utf8');
   res.setHeader('Content-Type','text/html');
-  res.write(html.replace('LOGIN_MESSAGE',req.cookies.message||''));
+  res.write(html);
   res.end();
 });
 
@@ -77,8 +85,11 @@ app.post('/login',(req,res)=>{
   let user = registeredUsers.find(u=>req.body.userName==u.userName);
   if(user) {
     let sessionid = app.sessionManager.createSession(req.body.userName);
-  res.setHeader('Set-Cookie',[`sessionid=${sessionid}`,`message='';Max-Age=0`]);
-    res.redirect('/home');
+    res.setHeader('Set-Cookie',[`sessionid=${sessionid}`,`message='';Max-Age=0`]);
+    let html = fs.readFileSync('public/homePage','utf8');
+    res.setHeader('Content-Type','text/html');
+    res.write(html);
+    res.end();
     return;
   }
   res.setHeader('Set-Cookie',`message=login failed;Max-Age=5`);
