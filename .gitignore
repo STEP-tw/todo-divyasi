@@ -2,4 +2,5 @@ node_modules/
 todo.todo/
 *.log
 .DS_Store
-data
+data/log.json
+data/*

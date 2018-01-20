@@ -11,7 +11,7 @@ describe('app',()=>{
       createSession: (userName)=> {
         return 123;
       },
-      getSession: (sessionid)=> {
+      getUserName: (sessionid)=> {
         return sessionid == 123;
       },
       deleteSession: (sessionid)=> {
@@ -96,7 +96,7 @@ describe('app',()=>{
     it('should serve the login page with message `login failed` for invalid users',done=>{
       request(app,{method:'POST',url:'/login',body:'userName=yogiraj'},(res)=>{
         th.should_be_redirected_to(res, '/login');
-        th.should_have_cookie(res, 'message', `login failed`);
+        th.should_have_expiring_cookie(res, 'message', `login failed`);
         done();
       })
     })
@@ -155,6 +155,59 @@ describe('app',()=>{
     })
     it("should redirect to login page for user invalid sessionid",done=>{
       request(app,{method:'GET',url:'/logout',headers:{cookie:`sessionid=${122}`}},res=>{
+        th.should_be_redirected_to(res,'/login');
+        done();
+      })
+    })
+  })
+  describe('GET /todo/create',()=>{
+    it('should serve create todo page for loggedin users',done=>{
+      request(app,{method:'GET',url:'/todo/create',headers:{cookie:`sessionid=${123}`}},res=>{
+        th.status_is_ok(res);
+        th.body_contains(res,'Create Todo');
+        th.body_contains(res,'Title');
+        th.body_contains(res,'Description');
+        th.body_contains(res,'submit');
+        done();
+      })
+    })
+    it('should redirect to login page for invalid sessionid',done=>{
+      request(app,{method:'GET',url:'/todo/create',headers:{cookie:`sessionid=${122}`}},res=>{
+        th.should_be_redirected_to(res,'/login');
+        done();
+      })
+    })
+    it('should redirect to login page for loggedout users',done=>{
+      request(app,{method:'GET',url:'/todo/create'},res=>{
+        th.should_be_redirected_to(res,'/login');
+        done();
+      })
+    })
+  })
+  describe('POST /todo/create',()=>{
+    it('should serve home page with added todo for loggedin users',done=>{
+      request(app,{method:'POST',url:'/todo/create',headers:{cookie:`sessionid=${123}`},body:`title=app&description=build a todo app`},res=>{
+        th.status_is_ok(res);
+        th.body_contains(res,'Create Todo');
+        th.body_contains(res,'app');
+        th.body_contains(res,'Logout');
+        done();
+      })
+    })
+    it('should redirect to login page for invalid sessionid',done=>{
+      request(app,{method:'POST',url:'/todo/create',headers:{cookie:`sessionid=${122}`}},res=>{
+        th.should_be_redirected_to(res,'/login');
+        done();
+      })
+    })
+    it('should redirect to login page for loggedout users',done=>{
+      request(app,{method:'POST',url:'/todo/create',body:`title=app&description=build a todo app`},res=>{
+        th.should_be_redirected_to(res,'/login');
+        done();
+      })
+    })
+    it('should redirect to login page for loggedout users',done=>{
+      request(app,{method:'POST',url:'/todo/create'},res=>{
         th.should_be_redirected_to(res,'/login');
         done();
       })
