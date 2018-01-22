@@ -1,18 +1,1 @@
-{"divya":
-  {"allTodos":[
-    {"id":"1","title":"purchage","description":"buy vegetables","allItems":[
-      {"id":1, "objective":"1/2 potato"}
-      ]
-    }]
-  },
-  "yogi":
-    {"allTodos":[
-      {"id":"1","title":"purchage","description":"buy vegetables","allItems":[
-        {"id":1, "objective":"1/2 potato"}
-        ]
-      },{"id":"1","title":"purchage2","description":"buy vegetables","allItems":[
-        {"id":1, "objective":"1/2 potato"}
-        ]
-      }]
-    }
-}
+{"divya":{"allTodos":[]},"yogi":{"allTodos":[{"id":"1","title":"purchage","description":"buy vegetables","allItems":[{"id":1,"objective":"1/2 potato"}]},{"id":"2","title":"purchage2","description":"buy vegetables","allItems":[{"id":1,"objective":"1/2 potato"}]}]}}

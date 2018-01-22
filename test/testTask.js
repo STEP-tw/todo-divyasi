@@ -8,7 +8,7 @@ describe('Title', ()=>{
     it('should edit the item', ()=>{
       let task = new Task('purchage a earphone', 1);
       task.editTodoItem('purchage a wrist watch');
-      assert.equal(task.todoItem, 'purchage a wrist watch');
+      assert.equal(task.getTodoItem(), 'purchage a wrist watch');
     })
   })
   describe('editStatus', ()=>{
@@ -31,25 +31,25 @@ describe('Title', ()=>{
     it('should give the true status if status has true', ()=>{
       let task = new Task('todo');
       task.editStatus(true);
-      assert.equal(task.status, true);
+      assert.equal(task.getStatus(), true);
     })
     it('should give the false status if status has false', ()=>{
       let task = new Task('todo');
       task.editStatus(false);
-      assert.equal(task.status, false);
+      assert.equal(task.getStatus(), false);
     })
     it('bydefault should give the false status', ()=>{
       let task = new Task('todo');
       task.editStatus(false);
-      assert.equal(task.status, false);
+      assert.equal(task.getStatus(), false);
     })
   })
-  describe('getTodo', ()=>{
+  describe('getTodoItem', ()=>{
     it('should give the todoItem', ()=>{
       let task = new Task('purchage a earphone', 1);
-      assert.equal(task.todoItem, 'purchage a earphone');
+      assert.equal(task.getTodoItem(), 'purchage a earphone');
       task.editTodoItem('purchage a wrist watch');
-      assert.equal(task.todoItem, 'purchage a wrist watch');
+      assert.equal(task.getTodoItem(), 'purchage a wrist watch');
     })
   })
 })

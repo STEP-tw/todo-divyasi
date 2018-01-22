@@ -1,7 +1,7 @@
 const timeStamp = require('./utility/time.js').timeStamp;
 const WebApp = require('./webapp');
 const fs = require('fs');
-const preseter = require('./lib/presenter.js');
+const presenter = require('./lib/presenter.js');
 
 let loginPage = fs.readFileSync('public/login','utf8');
 let home = fs.readFileSync('public/homePage','utf8');
@@ -31,7 +31,7 @@ const loadUser = function(req, res) {
 let getHomePageContent = function (userName) {
   let html = fs.readFileSync('public/homePage','utf8');
   let data = fs.readFileSync('data/todoData.json', 'utf8');
-  let todoList = preseter.showListOfAllTodos(JSON.parse(data), userName);
+  let todoList = presenter.showListOfAllTodos(JSON.parse(data), userName);
   html = html.replace(`TODOLIST`,todoList);
   return html;
 }
@@ -42,6 +42,14 @@ let redirectLoggedOutUserToLogin = (req, res)=>{
   if (req.urlIsOneOf(allowedUrlForLoogedUser) && !app.sessionManager.getUserName(sessionid)) {
     res.redirect('/login');
   }
+}
+
+let deleteTodo = (data, userName, todoId) => {
+  let todoList = data[userName].allTodos;
+  let todo = todoList.find(t => t.id == todoId);
+  let indexOfTodo = todoList.indexOf(todo);
+  todoList = todoList.splice(indexOfTodo, 1);
+  return data;
 }
 
 let redirectLoggedUserToHome = (req, res) => {
@@ -67,7 +75,21 @@ app.use((req, res)=>{
     let data = fs.readFileSync('data/todoData.json', 'utf8');
     data=JSON.parse(data);
     let todoId = req.url.split('/')[3];
-    let html = preseter.viewTodo(data, req.userName, todoId);
+    let html = presenter.viewTodo(data, req.userName, todoId);
+    res.write(html);
+    res.end();
+  }
+})
+
+app.use((req, res)=>{
+  if (req.url.startsWith('/todo/delete/')) {
+    let data = fs.readFileSync('data/todoData.json', 'utf8');
+    data=JSON.parse(data);
+    let todoId = req.url.split('/')[3];
+    let dataAfterDeletion = deleteTodo(data, req.userName, todoId);
+    let stringifyData = JSON.stringify(dataAfterDeletion);
+    fs.writeFileSync('data/todoData.json',stringifyData,'utf8');
+    let html = getHomePageContent(req.userName);
     res.write(html);
     res.end();
   }
