@@ -2,13 +2,15 @@ const presenter = require('../lib/presenter.js');
 const assert = require('chai').assert;
 describe("getTodoItemsInHtml",()=>{
   it("should give todoItem in html form without '<br>' at end when single item in list",()=>{
-    let actual=presenter.getTodoItemsInHtml([{id:1,objective:'build a todo app'}])
-    let expected = `<p>build a todo app</p>`;
+    let actual=presenter.getTodoItemsInHtml([{id:1,objective:'build a todo app'}],1)
+    let expected = `<p>build a todo app</p><a href="/todo/delete/1/1">Delete</a>`;
     assert.equal(actual,expected);
   })
   it("should give all todoItems in html form with joining them by '<br>' when more than one item in list",()=>{
-    let actual=presenter.getTodoItemsInHtml([{id:1,objective:'build a todo app'},{id:1,objective:'create sever.js'},{id:1,objective:'add login page'}])
-    let expected = `<p>build a todo app</p><br><p>create sever.js</p><br><p>add login page</p>`;
+    let todoItems=[{id:1,objective:'build a todo app'},{id:1,objective:'create sever.js'},{id:1,objective:'add login page'}];
+    let todoId=1;
+    let actual=presenter.getTodoItemsInHtml(todoItems,todoId);
+    let expected = `<p>build a todo app</p><a href="/todo/delete/1/1">Delete</a><br><p>create sever.js</p><a href="/todo/delete/1/1">Delete</a><br><p>add login page</p><a href="/todo/delete/1/1">Delete</a>`;
     assert.equal(actual,expected);
   })
 })
@@ -19,7 +21,7 @@ describe("viewTodo",()=>{
         {"id":"1","title":"purchage","description":"buy vegetables","allItems":[]
         }]
       }},'divya',1);
-    let expected = `<p>Title:purchage</p><br><p>Description:buy vegetables</p><br>Todo Items:<br>`;
+    let expected = `<a href="/home"> << Home </a><br><a href="/logout">  logout</a><p>Title:purchage</p><br><p>Description:buy vegetables</p><br>Todo Items:<br>`;
     assert.equal(actual,expected);
   })
   it("should give todo title, description and all todoItems in html form when items in list",()=>{
@@ -28,7 +30,7 @@ describe("viewTodo",()=>{
         {"id":"1","title":"purchage","description":"buy vegetables","allItems":[{"id":1, "objective":"1/2 potato"}]
         }]
       }},'divya',1);
-    let expected = `<p>Title:purchage</p><br><p>Description:buy vegetables</p><br>Todo Items:<br><p>1/2 potato</p>`;
+    let expected = `<a href="/home"> << Home </a><br><a href="/logout">  logout</a><p>Title:purchage</p><br><p>Description:buy vegetables</p><br>Todo Items:<br><p>1/2 potato</p><a href="/todo/delete/1/1">Delete</a>`;
     assert.equal(actual,expected);
   })
 })
@@ -47,6 +49,6 @@ describe('showListOfAllTodos',()=>{
     }
     let actual=presenter.showListOfAllTodos(data,'yogi');
     let expected=`<a href='/todo/view/1'>purchage</a> <a href='/todo/delete/1'> delete</a><br><a href='/todo/view/2'>purchage2</a> <a href='/todo/delete/2'> delete</a>`;
-    assert.equal(expected,actual);
+    assert.equal(actual,expected);
   })
 })

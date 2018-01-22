@@ -2,6 +2,7 @@ const timeStamp = require('./utility/time.js').timeStamp;
 const WebApp = require('./webapp');
 const fs = require('fs');
 const presenter = require('./lib/presenter.js');
+const utils = require('./utility/utils.js');
 
 let loginPage = fs.readFileSync('public/login','utf8');
 let home = fs.readFileSync('public/homePage','utf8');
@@ -44,14 +45,6 @@ let redirectLoggedOutUserToLogin = (req, res)=>{
   }
 }
 
-let deleteTodo = (data, userName, todoId) => {
-  let todoList = data[userName].allTodos;
-  let todo = todoList.find(t => t.id == todoId);
-  let indexOfTodo = todoList.indexOf(todo);
-  todoList = todoList.splice(indexOfTodo, 1);
-  return data;
-}
-
 let redirectLoggedUserToHome = (req, res) => {
   let sessionid = req.cookies.sessionid;
   if (req.urlIsOneOf(['/','/login']) && app.sessionManager.getUserName(sessionid)) {
@@ -86,8 +79,14 @@ app.use((req, res)=>{
     let data = fs.readFileSync('data/todoData.json', 'utf8');
     data=JSON.parse(data);
     let todoId = req.url.split('/')[3];
-    let dataAfterDeletion = deleteTodo(data, req.userName, todoId);
-    let stringifyData = JSON.stringify(dataAfterDeletion);
+    let todoItemId = req.url.split('/')[4];
+    if (todoItemId) {
+      data=utils.deleteTodoItem(data, req.userName, todoId, todoItemId);
+    }
+    if (todoId && !todoItemId) {
+      data = utils.deleteTodo(data, req.userName, todoId);
+    }
+    let stringifyData = JSON.stringify(data);
     fs.writeFileSync('data/todoData.json',stringifyData,'utf8');
     let html = getHomePageContent(req.userName);
     res.write(html);

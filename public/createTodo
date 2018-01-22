@@ -6,6 +6,7 @@
   </head>
   <body>
     <h2>Create Todo</h2>
+    <a href="/home"><< home </a><br>
     <a href="/logout">Logout</a><br><br>
     <form action="/todo/create" method="POST">
       Title: <input type="text" name="title"><br><br>
