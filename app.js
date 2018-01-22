@@ -53,6 +53,12 @@ let redirectLoggedUserToHome = (req, res) => {
   }
 }
 
+let addTodo = (data, userName, todoDetails)=>{
+  let allTodos = data[userName].allTodos;
+  allTodos.push(todoDetails);
+  return data;
+}
+
 app.use(loadUser);
 
 app.use((req,res)=>{
@@ -142,5 +148,18 @@ app.post('/login',(req,res)=>{
   res.setHeader('Set-Cookie',`message=login failed;Max-Age=5`);
   res.redirect('/login');
 });
+
+app.post('/todo/create',(req,res)=> {
+  let data = fs.readFileSync('data/todoData.json','utf8')
+  let parsedData = JSON.parse(data);
+  let todoId = new Date().getTime();
+  let todoDetails = req.body;
+  todoDetails.id = todoId;
+  todoDetails.allItems = [];
+  let newData = addTodo(parsedData, req.userName, todoDetails);
+  let stringifyData = JSON.stringify(newData);
+  fs.writeFileSync('data/todoData.json', stringifyData, 'utf8');
+  res.redirect('/home');
+})
 
 module.exports = app;
