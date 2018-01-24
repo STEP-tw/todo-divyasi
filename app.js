@@ -1,15 +1,19 @@
+const express = require('express');
 const timeStamp = require('./utility/time.js').timeStamp;
-const WebApp = require('./webapp');
 const fs = require('fs');
 const presenter = require('./lib/presenter.js');
 const utils = require('./utility/utils.js');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
 
-let loginPage = fs.readFileSync('public/login','utf8');
-let home = fs.readFileSync('public/homePage','utf8');
+let templates={};
+templates.loginPage = fs.readFileSync('public/login','utf8');
+templates.home = fs.readFileSync('public/homePage','utf8');
+templates.viewTodo = fs.readFileSync('public/viewTodo', 'utf8');
 let registeredUsers = [{userName:'divya'},{userName:'yogi'}];
 
 /*============================================================================*/
-const logger = function(fs,req,res) {
+const logger = function(fs,req,res,next) {
   let logs = ['--------------------------------------------------------------',
     `${timeStamp()}`,
     `${req.method}`,
@@ -19,147 +23,188 @@ const logger = function(fs,req,res) {
   ].join('\n');
   console.log(`${req.method}    ${req.url}`);
   fs.appendFile('./data/log.json',logs,()=>{});
+  next();
 }
 /*============================================================================*/
 
-let app = WebApp.create();
+let app = express();
 
-const loadUser = function(req, res) {
+const loadUser = function(req, res,next) {
   let userName = app.sessionManager.getUserName(req.cookies.sessionid);
   if (userName) req.userName = userName;
+  next();
 }
 
 let getHomePageContent = function (userName) {
-  let html = fs.readFileSync('public/homePage','utf8');
-  let data = fs.readFileSync('data/todoData.json', 'utf8');
-  let todoList = presenter.showListOfAllTodos(JSON.parse(data), userName);
+  let html = templates.home;
+  app.userStore.loadData();
+  let userData = app.userStore.getUserData(userName);
+  let todoList = presenter.showListOfAllTodos(userData);
   html = html.replace(`TODOLIST`,todoList);
   return html;
 }
 
-let redirectLoggedOutUserToLogin = (req, res)=>{
+let redirectLoggedOutUserToLogin = (req, res,next)=>{
   let allowedUrlForLoogedUser = ['/home','/logout','/todo/create'];
+
   let sessionid = req.cookies.sessionid;
-  if (req.urlIsOneOf(allowedUrlForLoogedUser) && !app.sessionManager.getUserName(sessionid)) {
+  if (allowedUrlForLoogedUser.includes(req.url) && !app.sessionManager.getUserName(sessionid)) {
     res.redirect('/login');
+    return ;
   }
+  next();
 }
 
-let redirectLoggedUserToHome = (req, res) => {
+let redirectLoggedUserToHome = (req, res,next) => {
   let sessionid = req.cookies.sessionid;
-  if (req.urlIsOneOf(['/','/login']) && app.sessionManager.getUserName(sessionid)) {
+  if (['/','/login'].includes(req.url) && app.sessionManager.getUserName(sessionid)) {
     res.redirect('/home');
-    return;
+    return ;
   }
+  next();
 }
 
-let addTodo = (data, userName, todoDetails)=>{
-  let allTodos = data[userName].allTodos;
-  allTodos.push(todoDetails);
-  return data;
+let serveLoginPage = function (req,res) {
+  res.set('Content-Type','text/html');
+  res.send(templates.loginPage.replace('LOGIN_MESSAGE',req.cookies.message||''));
+  res.end();
 }
+
+let serveLogoutPageWithLoginLink = function (req,res) {
+  let html=`<p>successfully loggedout</p><br><br><a href=/login>login here</a>`
+  res.set('Content-Type','text/html');
+  res.set('Set-Cookie',`sessionid=0;Max-Age=5`);
+  res.send(html);
+  res.end();
+}
+
+let serveHomePage = function (req,res) {
+  let html = getHomePageContent(req.userName);
+  res.set('Content-Type','text/html');
+  res.send(html);
+  res.end();
+}
+
+let serveCreateTodoPage = function (req,res) {
+  let html = fs.readFileSync('public/createTodo','utf8');
+  res.set('Content-Type','text/html');
+  res.send(html)
+  res.end();
+}
+
+let addTodo = (userData, todoDetails)=>{
+  let allTodos = userData.allTodos;
+  allTodos.push(todoDetails);
+  return userData;
+}
+
+let addTodoItem = function (userData, todoId, todoItem) {
+  let allTodos = userData.allTodos;
+  let todo = allTodos.find(t=>t.id==todoId);
+  todo.allItems.push(todoItem);
+  return userData;
+}
+
+app.use(cookieParser());
+
+app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use(loadUser);
 
-app.use((req,res)=>{
-  logger(fs,req,res);
+app.use((req,res,next)=>{
+  logger(fs,req,res,next);
 })
 
 app.use(redirectLoggedOutUserToLogin);
 
 app.use(redirectLoggedUserToHome);
 
-app.use((req, res)=>{
+app.use((req, res,next)=>{
   if (req.url.startsWith('/todo/view/')) {
-    let data = fs.readFileSync('data/todoData.json', 'utf8');
-    data=JSON.parse(data);
+    app.userStore.loadData();
+    let userData = app.userStore.getUserData(req.userName);
     let todoId = req.url.split('/')[3];
-    let html = presenter.viewTodo(data, req.userName, todoId);
-    res.write(html);
+    let html = presenter.viewTodo(templates.viewTodo,userData,todoId);
+    res.send(html);
     res.end();
   }
+  next();
 })
 
-app.use((req, res)=>{
+app.use((req, res,next)=>{
   if (req.url.startsWith('/todo/delete/')) {
-    let data = fs.readFileSync('data/todoData.json', 'utf8');
-    data=JSON.parse(data);
+    app.userStore.loadData();
+    let userData=app.userStore.getUserData(req.userName);
     let todoId = req.url.split('/')[3];
     let todoItemId = req.url.split('/')[4];
-    if (todoItemId) {
-      data=utils.deleteTodoItem(data, req.userName, todoId, todoItemId);
+    if (todoId && todoItemId) {
+      userData = utils.deleteTodoItem(userData,todoId,todoItemId);
     }
     if (todoId && !todoItemId) {
-      data = utils.deleteTodo(data, req.userName, todoId);
+      userData = utils.deleteTodo(userData,todoId);
     }
-    let stringifyData = JSON.stringify(data);
-    fs.writeFileSync('data/todoData.json',stringifyData,'utf8');
+    app.userStore.modifyUserData(req.userName,userData);
     let html = getHomePageContent(req.userName);
-    res.write(html);
+    res.send(html);
     res.end();
   }
+  next();
 })
 
-app.get('/',(req,res)=>{
-  res.setHeader('Content-Type','text/html');
-  res.write(loginPage.replace('LOGIN_MESSAGE',req.cookies.message||''));
-  res.end();
+app.use((req, res,next)=>{
+  if (req.method=='POST' && req.url.startsWith('/todo/add/')) {
+    let todoId = req.url.split('/')[3];
+    let todoItemId = new Date().getTime()
+    let todoItem = {};
+    todoItem.id = todoItemId
+    todoItem.objective = req.body.objective;
+    todoItem.status = false;
+    app.userStore.loadData();
+    let userData = app.userStore.getUserData(req.userName);
+    let newUserData = addTodoItem(userData, todoId, todoItem);
+    app.userStore.modifyUserData(req.userName, newUserData);
+    let responseText = {id:todoItemId};
+    res.send(JSON.stringify(responseText));
+    res.end();
+  }
+  next();
 })
 
-app.get('/login',(req,res)=>{
-  res.setHeader('Content-Type','text/html');
-  res.write(loginPage.replace('LOGIN_MESSAGE',req.cookies.message||''));
-  res.end();
-});
+app.get("/",serveLoginPage);
 
-app.get('/logout',(req,res)=>{
-  let html=`<p>successfully loggedout</p><br><br><a href=/login>login here</a>`
-  res.setHeader('Content-Type','text/html');
-  res.setHeader('Set-Cookie',`sessionid=0;Max-Age=5`);
-  res.write(html);
-  res.end();
-});
+app.get("/login",serveLoginPage);
 
-app.get('/home',(req,res)=>{
-  let html = getHomePageContent(req.userName)
-  res.setHeader('Content-Type','text/html');
-  res.write(html);
-  res.end();
-});
+app.get("/logout",serveLogoutPageWithLoginLink);
 
-app.get('/todo/create',(req,res)=>{
-  let html = fs.readFileSync('public/createTodo','utf8');
-  res.setHeader('Content-Type','text/html');
-  res.write(html)
-  res.end();
-});
+app.get('/home',serveHomePage);
+
+app.get('/todo/create',serveCreateTodoPage);
 
 app.post('/login',(req,res)=>{
   let user = registeredUsers.find(u=>req.body.userName==u.userName);
+  console.log(req.body);
   if(user) {
     let sessionid = app.sessionManager.createSession(req.body.userName);
-    let html = getHomePageContent(user.userName);
-    res.setHeader('Set-Cookie',[`sessionid=${sessionid}`,`message='';Max-Age=0`]);
-    res.setHeader('Content-Type','text/html');
-    res.write(html);
-    res.end();
+    res.set('Set-Cookie',[`sessionid=${sessionid}`,`message='';Max-Age=0`]);
+    req.userName=req.body.userName;
+    serveHomePage(req,res);
     return;
   }
-  res.setHeader('Set-Cookie',`message=login failed;Max-Age=5`);
+  res.set('Set-Cookie',`message=login failed;Max-Age=5`);
   res.redirect('/login');
 });
 
 app.post('/todo/create',(req,res)=> {
-  let data = fs.readFileSync('data/todoData.json','utf8')
-  let parsedData = JSON.parse(data);
+  let userName=req.userName;
+  app.userStore.loadData();
   let todoId = new Date().getTime();
   let todoDetails = req.body;
   todoDetails.id = todoId;
   todoDetails.allItems = [];
-  let newData = addTodo(parsedData, req.userName, todoDetails);
-  let stringifyData = JSON.stringify(newData);
-  fs.writeFileSync('data/todoData.json', stringifyData, 'utf8');
-  res.redirect('/home');
+  let userData=app.userStore.getUserData(userName);
+  let newData = addTodo(userData, todoDetails);
+  app.userStore.modifyUserData(userName,newData)
+  serveHomePage(req,res);
 })
 
 module.exports = app;

@@ -7,3 +7,4 @@ data/todoData.json
 data/log.json
 data/*
 coverage/*
+.eslintrc.js

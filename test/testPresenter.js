@@ -14,7 +14,7 @@ describe("getTodoItemsInHtml",()=>{
     assert.equal(actual,expected);
   })
 })
-describe("viewTodo",()=>{
+describe.skip("viewTodo",()=>{
   it("should give only todo title and description in html form when no item in list",()=>{
     let actual=presenter.viewTodo({"divya":
       {"allTodos":[
@@ -36,8 +36,7 @@ describe("viewTodo",()=>{
 })
 describe('showListOfAllTodos',()=>{
   it("should give titles of allTodos in html",()=>{
-    let data={"yogi":
-      {"allTodos":[
+    let data={"allTodos":[
         {"id":"1","title":"purchage","description":"buy vegetables","allItems":[
           {"id":1, "objective":"1/2 potato"}
           ]
@@ -46,7 +45,6 @@ describe('showListOfAllTodos',()=>{
           ]
         }]
       }
-    }
     let actual=presenter.showListOfAllTodos(data,'yogi');
     let expected=`<a href='/todo/view/1'>purchage</a> <a href='/todo/delete/1'> delete</a><br><a href='/todo/view/2'>purchage2</a> <a href='/todo/delete/2'> delete</a>`;
     assert.equal(actual,expected);
