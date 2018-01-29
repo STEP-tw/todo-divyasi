@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="/js/addTodoItem.js" charset="utf-8"></script>
+    <script src="/js/markItem.js" charset="utf-8"></script>
+    <title>View Todo</title>
+  </head>
+  <body>
+    <a href="/home"> << Home </a><br>
+    <a href="/logout">  logout</a>
+    <div class="todoDetails">
+      TODO_DETAILS
+    </div>
+    <input type="text" class="addTodoItem"><button onclick=requestAddTodoItem()>add Item</button>
+  </body>
+</html>

@@ -7,9 +7,9 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
 let templates={};
-templates.loginPage = fs.readFileSync('public/login','utf8');
-templates.home = fs.readFileSync('public/homePage','utf8');
-templates.viewTodo = fs.readFileSync('public/viewTodo', 'utf8');
+templates.loginPage = fs.readFileSync('./templates/login','utf8');
+templates.home = fs.readFileSync('./templates/homePage','utf8');
+templates.viewTodo = fs.readFileSync('./templates/viewTodo', 'utf8');
 let registeredUsers = [{userName:'divya'},{userName:'yogi'}];
 
 /*============================================================================*/
@@ -86,7 +86,7 @@ let serveHomePage = function (req,res) {
 }
 
 let serveCreateTodoPage = function (req,res) {
-  let html = fs.readFileSync('public/createTodo','utf8');
+  let html = fs.readFileSync('./templates/createTodo','utf8');
   res.set('Content-Type','text/html');
   res.send(html)
   res.end();
@@ -105,11 +105,21 @@ let addTodoItem = function (userData, todoId, todoItem) {
   return userData;
 }
 
+let markItemAs = function (userData,todoId,todoItemId,status) {
+  let allTodos = userData.allTodos;
+  let todo = allTodos.find(t=>t.id==todoId);
+  let todoItem=todo.allItems.find(i=>i.id==todoItemId);
+  todoItem.status=status;
+  return userData;
+}
+
 app.use(cookieParser());
 
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use(loadUser);
+
+app.use(express.static('./public'))
 
 app.use((req,res,next)=>{
   logger(fs,req,res,next);
@@ -205,6 +215,18 @@ app.post('/todo/create',(req,res)=> {
   let newData = addTodo(userData, todoDetails);
   app.userStore.modifyUserData(userName,newData)
   serveHomePage(req,res);
+})
+
+app.post("/todo/mark/:todoId/:item",(req,res)=>{
+  let itemId=req.params.item.split("item")[1];
+  let todoId=req.params.todoId;
+  let status=JSON.parse(req.body.status);
+  app.userStore.loadData()
+  let userData=app.userStore.getUserData(req.userName);
+  let newUserData=markItemAs(userData,todoId,itemId,status);
+  app.userStore.modifyUserData(req.userName,newUserData);
+  res.send("");
+  userData=app.userStore.getUserData(req.userName);
 })
 
 module.exports = app;

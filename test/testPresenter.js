@@ -3,34 +3,38 @@ const assert = require('chai').assert;
 describe("getTodoItemsInHtml",()=>{
   it("should give todoItem in html form without '<br>' at end when single item in list",()=>{
     let actual=presenter.getTodoItemsInHtml([{id:1,objective:'build a todo app'}],1)
-    let expected = `<p>build a todo app</p><a href="/todo/delete/1/1">Delete</a>`;
+    let expected = `<span><span><input type="checkbox" id=item1 onclick=requestMarkAs(event) ></span><span>build a todo app</span><span><a href="/todo/delete/1/1">Delete</a></span></span>`;
     assert.equal(actual,expected);
   })
   it("should give all todoItems in html form with joining them by '<br>' when more than one item in list",()=>{
-    let todoItems=[{id:1,objective:'build a todo app'},{id:1,objective:'create sever.js'},{id:1,objective:'add login page'}];
+    let todoItems=[{id:1,objective:'build a todo app'},{id:1,objective:'create sever.js'}];
     let todoId=1;
     let actual=presenter.getTodoItemsInHtml(todoItems,todoId);
-    let expected = `<p>build a todo app</p><a href="/todo/delete/1/1">Delete</a><br><p>create sever.js</p><a href="/todo/delete/1/1">Delete</a><br><p>add login page</p><a href="/todo/delete/1/1">Delete</a>`;
+    let item1=`<span><input type="checkbox" id=item1 onclick=requestMarkAs(event) ></span><span>build a todo app</span><span><a href="/todo/delete/1/1">Delete</a></span></span><br><span>`;
+    let item2=`<span><input type="checkbox" id=item1 onclick=requestMarkAs(event) ></span><span>create sever.js</span><span><a href="/todo/delete/1/1">Delete</a></span>`;
+    let expected = `<span>${item1}${item2}</span>`;
     assert.equal(actual,expected);
   })
 })
-describe.skip("viewTodo",()=>{
+describe("viewTodo",()=>{
+  let template="TODO_DETAILS";
   it("should give only todo title and description in html form when no item in list",()=>{
-    let actual=presenter.viewTodo({"divya":
-      {"allTodos":[
+    let userData={"allTodos":[
         {"id":"1","title":"purchage","description":"buy vegetables","allItems":[]
         }]
-      }},'divya',1);
-    let expected = `<a href="/home"> << Home </a><br><a href="/logout">  logout</a><p>Title:purchage</p><br><p>Description:buy vegetables</p><br>Todo Items:<br>`;
+      };
+    let actual=presenter.viewTodo(template,userData,1);
+    let expected=`<div id=1 class=todo><p>Title:purchage</p><br><p>Description:buy vegetables</p><br>Todo Items:<br><div class=todoItems></div></div>`
     assert.equal(actual,expected);
   })
   it("should give todo title, description and all todoItems in html form when items in list",()=>{
-    let actual=presenter.viewTodo({"divya":
-      {"allTodos":[
-        {"id":"1","title":"purchage","description":"buy vegetables","allItems":[{"id":1, "objective":"1/2 potato"}]
+    let userData={"allTodos":[
+        {"id":"1","title":"purchage","description":"buy vegetables","allItems":[{"id":1,"objective":"1/2 potato","status":false}]
         }]
-      }},'divya',1);
-    let expected = `<a href="/home"> << Home </a><br><a href="/logout">  logout</a><p>Title:purchage</p><br><p>Description:buy vegetables</p><br>Todo Items:<br><p>1/2 potato</p><a href="/todo/delete/1/1">Delete</a>`;
+      }
+    let actual=presenter.viewTodo(template,userData,1);
+    let todoItems=`Todo Items:<br><div class=todoItems><span><span><input type="checkbox" id=item1 onclick=requestMarkAs(event) ></span><span>1/2 potato</span><span><a href="/todo/delete/1/1">Delete</a></span></span></div>`
+    let expected=`<div id=1 class=todo><p>Title:purchage</p><br><p>Description:buy vegetables</p><br>${todoItems}</div>`
     assert.equal(actual,expected);
   })
 })
